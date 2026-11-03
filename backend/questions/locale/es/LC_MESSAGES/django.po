@@ -1,0 +1,126 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Heroes del Corazon\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Collaborator"
+msgstr "Colaborador"
+
+msgid "Area"
+msgstr "Área"
+
+msgid "Category"
+msgstr "Categoría"
+
+msgid "Criterion"
+msgstr "Criterio"
+
+msgid "Score"
+msgstr "Puntuación"
+
+msgid "Date"
+msgstr "Fecha"
+
+msgid "Question"
+msgstr "Pregunta"
+
+msgid "Questions"
+msgstr "Preguntas"
+
+msgid "You must score every criterion of the form, each one only once."
+msgstr "Debes calificar todos los criterios del formulario, una sola vez cada uno."
+
+msgid "This category has evaluations: deactivate it instead of deleting it."
+msgstr "Esta categoría ya tiene evaluaciones: desactívala en lugar de borrarla."
+
+msgid "This question has evaluations: deactivate it instead of deleting it."
+msgstr "Esta pregunta ya tiene evaluaciones: desactívala en lugar de borrarla."
+
+msgid "Enter a name."
+msgstr "Escribe un nombre."
+
+msgid "Add at least one question to the category."
+msgstr "Agrega al menos una pregunta a la categoría."
+
+msgid "The collaborator does not belong to your area."
+msgstr "El colaborador no pertenece a tu área."
+
+msgid "You cannot evaluate yourself."
+msgstr "No puedes evaluarte a ti mismo."
+
+msgid "Reviewed by"
+msgstr "Revisado por"
+
+msgid "Reviewed at"
+msgstr "Fecha de revisión"
+
+msgid "There is nothing pending to review for that collaborator and employee."
+msgstr "No hay nada pendiente de revisar para ese colaborador y empleado."
+
+msgid "Staff member"
+msgstr "Personal"
+
+msgid "There is nothing pending to review for that submission."
+msgstr "No hay nada pendiente de revisar en ese envío."
+
+msgid "You already scored this colleague this month."
+msgstr "Ya calificaste a este compañero este mes."
+
+msgid "You reached the monthly limit of colleagues to score."
+msgstr "Alcanzaste el límite mensual de compañeros a calificar."
+
+msgid "Enter a whole number between 1 and %(max)s."
+msgstr "Ingresa un número entero entre 1 y %(max)s."
+
+msgid "Congratulations! Your evaluation result - Heroes del Corazon"
+msgstr "¡Felicitaciones! Resultado de tu evaluación - Héroes del Corazón"
+
+msgid "Your evaluation result - Heroes del Corazon"
+msgstr "Resultado de tu evaluación - Héroes del Corazón"
+
+msgid ""
+"Congratulations, %(name)s!\n"
+"\n"
+"Your evaluation was reviewed and your final score is %(average)s out of 5. Your work and commitment make you one of the heroes of our institution. Thank you for everything you give to the team!"
+msgstr ""
+"¡Felicitaciones, %(name)s!\n"
+"\n"
+"Tu evaluación fue revisada y tu puntuación final es %(average)s de 5. Tu trabajo y tu compromiso te hacen uno de los héroes de nuestra institución. ¡Gracias por todo lo que le das al equipo!"
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your evaluation was reviewed and your current final score is %(average)s out of 5. Thank you for your effort: every step counts and we are sure you can reach your goals. Keep going, we are with you next month!"
+msgstr ""
+"Hola %(name)s,\n"
+"\n"
+"Tu evaluación fue revisada y tu puntuación final actual es %(average)s de 5. Gracias por tu esfuerzo: cada paso cuenta y estamos seguros de que puedes alcanzar tus metas. ¡Ánimo, el próximo mes estamos contigo!"
+
+msgid "Heroes del Corazon team"
+msgstr "Equipo Héroes del Corazón"
+
+msgid "Choose an open evaluation."
+msgstr "Elige una evaluación abierta."
+
+msgid "Choose an evaluation."
+msgstr "Elige una evaluación."
+
+msgid "This evaluation has answers: close it instead of deleting it."
+msgstr "Esta evaluación ya tiene respuestas: ciérrala en lugar de borrarla."
+
+msgid "Choose a closing date."
+msgstr "Elige la fecha de cierre."
+
+msgid "The closing date cannot be in the past."
+msgstr "La fecha de cierre no puede ser anterior a hoy."
+
+msgid "This evaluation already has answers: create a new evaluation to add categories or questions."
+msgstr "Esta evaluación ya tiene respuestas: crea una evaluación nueva para agregar categorías o preguntas."
+
+msgid "Attach an Excel (.xlsx) or CSV file."
+msgstr "Adjunta un archivo de Excel (.xlsx) o un CSV."
