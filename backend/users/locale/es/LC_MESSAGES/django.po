@@ -1,0 +1,112 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Heroes del Corazon\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# ---------- users ----------
+msgid "Invalid email, you must use an institutional email."
+msgstr "El correo no es válido, debes utilizar un correo institucional."
+
+msgid "Area boss"
+msgstr "Jefe de Área"
+
+msgid "Collaborator"
+msgstr "Colaborador"
+
+msgid "Role"
+msgstr "Rol"
+
+msgid "Area"
+msgstr "Área"
+
+msgid "Institutional email"
+msgstr "Correo institucional"
+
+msgid "First name"
+msgstr "Nombres"
+
+msgid "Last name"
+msgstr "Apellidos"
+
+msgid "User"
+msgstr "Usuario"
+
+msgid "Users"
+msgstr "Usuarios"
+
+msgid "Clinic"
+msgstr "Clínica"
+
+msgid "The username cannot be empty."
+msgstr "El nombre de usuario no puede estar vacío."
+
+msgid "A user with this username already exists."
+msgstr "Ya existe un usuario con este nombre de usuario."
+
+msgid "A user with this email already exists."
+msgstr "Ya existe un usuario con este correo electrónico."
+
+msgid "The first name cannot be empty."
+msgstr "Los nombres no pueden estar vacíos."
+
+msgid "The last name cannot be empty."
+msgstr "Los apellidos no pueden estar vacíos."
+
+msgid "This field is required to change your password."
+msgstr "Este campo es requerido para cambiar tu contraseña."
+
+msgid "The current password is incorrect."
+msgstr "La contraseña actual es incorrecta."
+
+msgid "Too many failed attempts. Try again later."
+msgstr "Demasiados intentos fallidos. Intenta más tarde."
+
+msgid "Invalid credentials."
+msgstr "Credenciales inválidas."
+
+msgid "No active session."
+msgstr "Sin sesión."
+
+msgid "Session expired."
+msgstr "Sesión expirada."
+
+msgid "Password recovery - Heroes del Corazon"
+msgstr "Recuperación de contraseña - Héroes del Corazón"
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"We received a request to reset your password. Open the following link:\n"
+"\n"
+"%(link)s\n"
+"\n"
+"If it was not you, ignore this email."
+msgstr ""
+"Hola %(name)s,\n"
+"\n"
+"Recibimos una solicitud para restablecer tu contraseña. Ingresa al siguiente enlace:\n"
+"\n"
+"%(link)s\n"
+"\n"
+"Si no fuiste tú, ignora este correo."
+
+msgid "If the email exists, you will receive a link to reset your password."
+msgstr ""
+"Si el correo existe, recibirás un enlace para restablecer tu contraseña."
+
+msgid "The link is invalid or has expired."
+msgstr "El enlace no es válido o ya expiró."
+
+msgid "Password updated."
+msgstr "Contraseña actualizada."
+
+msgid "Only the area boss can perform this action."
+msgstr "Solo el jefe de área puede realizar esta acción."
+
+msgid "Only a collaborator can perform this action."
+msgstr "Solo un colaborador puede realizar esta acción."
