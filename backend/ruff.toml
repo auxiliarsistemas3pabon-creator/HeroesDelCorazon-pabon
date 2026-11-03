@@ -1,0 +1,5 @@
+[lint]
+select = ["I", "F401"]
+
+[lint.isort]
+known-first-party = ["common", "config", "questions", "users"]

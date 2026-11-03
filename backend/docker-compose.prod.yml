@@ -1,0 +1,59 @@
+name: heroes_corazon
+
+# Production (run from this folder): docker compose -f docker-compose.prod.yml up -d --build
+# Required variables (in a .env next to this file or exported): see .env.example.
+# The API listens on :8000; put your reverse proxy / the built frontend in front of it.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-HeroesDelCorazon}
+      POSTGRES_USER: ${POSTGRES_USER:-heroes_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        REQUIREMENTS: prod
+    restart: always
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?define DJANGO_SECRET_KEY}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:?define DJANGO_ALLOWED_HOSTS}
+      POSTGRES_DB: ${POSTGRES_DB:-HeroesDelCorazon}
+      POSTGRES_USER: ${POSTGRES_USER:-heroes_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      EMAIL_BACKEND: django.core.mail.backends.smtp.EmailBackend
+      EMAIL_HOST: ${EMAIL_HOST:?define EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-Heroes del Corazon <noreply@heroescorazon.local>}
+      FRONTEND_BASE_URL: ${SITE_URL:?define SITE_URL}
+      CORS_ALLOWED_ORIGINS: ${SITE_URL}
+      CSRF_TRUSTED_ORIGINS: ${SITE_URL}
+      COLLECT_STATIC: "true"
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    name: heroes_api_postgres_data  # volumen existente con los datos; no renombrar
