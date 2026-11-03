@@ -19,6 +19,9 @@ env/
 ENV/
 biometricapi_env/
 
+#data
+data/
+
 # Django
 *.log
 local_settings.py
