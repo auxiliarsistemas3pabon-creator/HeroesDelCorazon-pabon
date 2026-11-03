@@ -1,0 +1,1 @@
+export const DateGrain = 'day' | 'month' | 'year';
