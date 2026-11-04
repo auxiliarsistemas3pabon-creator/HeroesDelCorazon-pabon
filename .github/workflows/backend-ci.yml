@@ -2,6 +2,7 @@ name: Backend CI
 
 # Corre lint + tests de backend en cada push/PR que toque ese 
 # directorio. La suite ya existía pero hasta ahora solo se ejecuta a mano.
+# Los cambios de este workflow solo se aplican después de subir el archivo a la rama.
 on:
   push:
     branches: [ "main" ]
