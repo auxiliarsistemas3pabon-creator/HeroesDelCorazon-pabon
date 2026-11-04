@@ -20,7 +20,8 @@ from common.permissions import MANAGER_ROLES, IsBossOrSuperAdmin, owned_by
 from users.areas import is_removed_area
 from users.models import User
 
-from .limits import monthly_limit as evaluation_limit, scored_this_month
+from .limits import monthly_limit as evaluation_limit
+from .limits import scored_this_month
 from .models import Category, Criterion, Evaluation, EvaluationSetting, Question
 from .staff_import import AnswersFileError, import_evaluations, read_table
 

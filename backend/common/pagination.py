@@ -6,6 +6,7 @@
 
 from rest_framework.pagination import PageNumberPagination
 
+
 class DefaultPagination(PageNumberPagination):
     """El parametro del tamaño de las paginas. """
     page_size_query_param = "page_size"

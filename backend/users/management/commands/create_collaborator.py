@@ -1,5 +1,5 @@
-from getpass import getpass
 import sys
+from getpass import getpass
 
 from django.core.management.base import BaseCommand, CommandError
 

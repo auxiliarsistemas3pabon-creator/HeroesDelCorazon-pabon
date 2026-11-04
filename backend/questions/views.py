@@ -8,7 +8,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.permissions import MANAGER_ROLES, IsBossOrSuperAdmin, owned_by, IsCollaborator
+from common.permissions import (
+    MANAGER_ROLES,
+    IsBossOrSuperAdmin,
+    IsCollaborator,
+    owned_by,
+)
 from users.models import User
 
 from .limits import assigned_personal, find_evaluation, monthly_limit, scored_this_month

@@ -3,6 +3,7 @@ from rest_framework.permissions import BasePermission
 
 from users.models import User
 
+
 # Permisos por rol. Cada uno exige usuario autenticado y rol exacto (no jerarquico: un superadmin no es boss).
 class IsSuperAdmin(BasePermission):
     message = _("Only a superadmin can perform this action.")
