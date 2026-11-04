@@ -462,8 +462,10 @@ class DashboardView(APIView):
         for row in users.values("area").annotate(n=Count("id")):
             staff[row["area"] or "-"] = row["n"]
 
+        if request.user.area:
+            own_answers = own_answers.filter(personal__area=request.user.area)
         evaluated = {}
-        for row in own_answers.filter(personal__in=users).values("area").annotate(n=Count("personal", distinct=True)):
+        for row in own_answers.values("area").annotate(n=Count("personal", distinct=True)):
             evaluated[row["area"] or "-"] = row["n"]
 
         areas = sorted(set(staff) | set(evaluated))
@@ -471,7 +473,7 @@ class DashboardView(APIView):
             {"area": area, "staff": staff.get(area, 0), "evaluated": evaluated.get(area, 0)}
             for area in areas
         ]
-        total_evaluated = own_answers.filter(personal__in=users).values("personal").distinct().count()
+        total_evaluated = own_answers.values("personal").distinct().count()
         people = list(users.values("id", "first_name", "last_name", "role", "area", "position").order_by("first_name", "last_name"))
         return Response({
             "staff": sum(staff.values()),

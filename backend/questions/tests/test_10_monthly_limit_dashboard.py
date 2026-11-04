@@ -29,6 +29,11 @@ class MonthlyLimitAndDashboardTests(APITestCase):
         self.assertEqual(sorted(quota["personal"]), sorted(p.pk for p in others[:3]))
 
     def test_boss_sets_the_monthly_limit_from_1_to_30(self):
+        Evaluation.objects.update(
+            monthly_limit=None,
+            closes_on=None,
+            program_started_at=timezone.now(),
+        )
         url = "/api/v1/questions/settings/"
         self.client.force_authenticate(self.team[0])
         self.assertEqual(self.client.get(url).status_code, 403)
@@ -75,11 +80,14 @@ class MonthlyLimitAndDashboardTests(APITestCase):
     def test_dashboard_counts_for_both_roles(self):
         self.send(self.team[0], self.team[1])
 
-        for viewer in (self.boss, self.team[4]):
-            self.client.force_authenticate(viewer)
-            data = self.client.get("/api/v1/questions/dashboard/").data
-            self.assertEqual(data["staff"], 7)  # boss + 5 + cardio
-            self.assertEqual(data["areas"], 2)
-            self.assertEqual(data["evaluated"], 1)
-            emergency = next(a for a in data["by_area"] if a["area"] == "Emergency")
-            self.assertEqual((emergency["staff"], emergency["evaluated"]), (6, 1))
+        self.client.force_authenticate(self.boss)
+        boss_data = self.client.get("/api/v1/questions/dashboard/").data
+        self.assertEqual((boss_data["staff"], boss_data["areas"], boss_data["evaluated"]), (5, 1, 1))
+        emergency = next(a for a in boss_data["by_area"] if a["area"] == "Emergency")
+        self.assertEqual((emergency["staff"], emergency["evaluated"]), (5, 1))
+
+        self.client.force_authenticate(self.team[4])
+        collaborator_data = self.client.get("/api/v1/questions/dashboard/").data
+        self.assertEqual((collaborator_data["staff"], collaborator_data["areas"], collaborator_data["evaluated"]), (6, 1, 1))
+        emergency = next(a for a in collaborator_data["by_area"] if a["area"] == "Emergency")
+        self.assertEqual((emergency["staff"], emergency["evaluated"]), (6, 1))

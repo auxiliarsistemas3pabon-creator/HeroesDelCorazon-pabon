@@ -10,9 +10,9 @@ from .models import Evaluation, EvaluationSetting, Question
 def monthly_limit(evaluation=None):
     """How many colleagues a collaborator can score per month in this evaluation."""
     if evaluation is not None:
-        # A per-evaluation value wins; the global EvaluationSetting row is only used when no evaluation is given.
+        # A per-evaluation value wins; otherwise use the configurable global default.
         # Always clamped to 1..MAX so a bad stored value can never block everyone or allow unlimited answers.
-        value = evaluation.monthly_limit if evaluation.monthly_limit is not None else EvaluationSetting.DEFAULT_MONTHLY_LIMIT
+        value = evaluation.monthly_limit if evaluation.monthly_limit is not None else EvaluationSetting.current().monthly_limit
         return max(1, min(value, EvaluationSetting.MAX_MONTHLY_LIMIT))
     return max(1, min(EvaluationSetting.current().monthly_limit, EvaluationSetting.MAX_MONTHLY_LIMIT))
 

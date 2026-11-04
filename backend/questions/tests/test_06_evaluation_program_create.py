@@ -10,8 +10,8 @@ class EvaluationProgramCreateTests(APITestCase):
     def setUp(self):
         Evaluation.objects.update(monthly_limit=3)  # programmed with the default quota
         self.boss = create_user("program.boss", User.Role.BOSS)
-        self.emergency = create_user("program.emergency", User.Role.COLLABORATOR, area="Emergency")
-        self.cardiology = create_user("program.cardiology", User.Role.COLLABORATOR, area="Cardiology")
+        self.emergency = create_user("program.emergency", User.Role.PERSONAL, area="Emergency")
+        self.cardiology = create_user("program.cardiology", User.Role.PERSONAL, area="Cardiology")
         self.source = Evaluation.objects.create(monthly_limit=3, 
             name="Desempeño",
             created_by=self.boss,

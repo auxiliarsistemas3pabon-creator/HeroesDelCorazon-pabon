@@ -60,7 +60,7 @@ class Evaluation(models.Model):
     # areas: None means every area. personal_ids: empty list means everyone in the allowed areas.
     areas = models.JSONField(_("Areas to evaluate"), null=True, blank=True, default=None)
     personal_ids = models.JSONField(_("Staff to evaluate"), default=list, blank=True)
-    # Per-evaluation quota; None falls back to EvaluationSetting.DEFAULT_MONTHLY_LIMIT (see limits.monthly_limit).
+    # Per-evaluation quota; None falls back to the global EvaluationSetting (see limits.monthly_limit).
     monthly_limit = models.PositiveSmallIntegerField(_("Monthly limit"), null=True, blank=True, default=None)
     # Collaborators (evaluators) enabled for this evaluation. Empty list means every collaborator of the allowed areas.
     # Independent from the selection mode below.

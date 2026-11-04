@@ -12,6 +12,7 @@ class EvaluationClosingDateTests(APITestCase):
     def setUp(self):
         Evaluation.objects.update(monthly_limit=3)  # programmed with the default quota
         self.boss = create_user("boss.demo", User.Role.BOSS)
+        Evaluation.objects.filter(created_by__isnull=True).update(created_by=self.boss)
         self.client.force_authenticate(self.boss)
 
     def test_boss_can_choose_any_closing_date_and_it_closes_automatically(self):
@@ -25,19 +26,19 @@ class EvaluationClosingDateTests(APITestCase):
         )
         self.assertEqual((scheduled.status_code, scheduled.data["closes_on"]), (200, "2030-01-01"))
 
-        closed = self.client.patch(
-            f"{self.EVALUATIONS}{created.data['id']}/",
-            {"closes_on": "2000-01-01"},
-            format="json",
-        )
-        self.assertEqual(closed.data["status"], "closed")
-
         invalid = self.client.patch(
             f"{self.EVALUATIONS}{created.data['id']}/",
             {"closes_on": "invalid-date"},
             format="json",
         )
         self.assertEqual(invalid.status_code, 400)
+
+        closed = self.client.patch(
+            f"{self.EVALUATIONS}{created.data['id']}/",
+            {"closes_on": "2000-01-01"},
+            format="json",
+        )
+        self.assertEqual(closed.data["status"], "closed")
 
     def test_boss_can_assign_all_selected_or_no_evaluation_areas(self):
         User.objects.create_user(
@@ -82,8 +83,8 @@ class EvaluationClosingDateTests(APITestCase):
         )
 
     def test_boss_can_assign_staff_members_and_only_they_can_be_evaluated(self):
-        first = create_user("first.target", User.Role.COLLABORATOR, area="Emergency")
-        second = create_user("second.target", User.Role.COLLABORATOR, area="Emergency")
+        first = create_user("first.target", User.Role.PERSONAL, area="Emergency")
+        second = create_user("second.target", User.Role.PERSONAL, area="Emergency")
         self.client.force_authenticate(self.boss)
         evaluation = self.client.post(self.EVALUATIONS, {"name": "Personas elegidas"}, format="json").data
         url = f"{self.EVALUATIONS}{evaluation['id']}/"
@@ -103,7 +104,7 @@ class EvaluationClosingDateTests(APITestCase):
         self.client.force_authenticate(self.boss)
         outside_areas = self.client.patch(
             url,
-            {"areas": ["Emergency"], "personal_ids": [create_user("other.target", User.Role.COLLABORATOR, area="Cardiology").pk]},
+            {"areas": ["Emergency"], "personal_ids": [create_user("other.target", User.Role.PERSONAL, area="Cardiology").pk]},
             format="json",
         )
         self.assertEqual(outside_areas.status_code, 400)

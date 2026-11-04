@@ -8,6 +8,7 @@ from .helpers import create_user
 
 class EvaluationAreaScopeTests(APITestCase):
     def test_collaborators_only_see_evaluations_for_their_area_and_cannot_bypass_scope(self):
+        Evaluation.objects.update(is_available=False)
         boss = create_user("scope.boss", User.Role.BOSS)
         collaborator = create_user("scope.me", User.Role.COLLABORATOR, area="Emergency")
         colleague = create_user("scope.peer", User.Role.COLLABORATOR, area="Emergency")

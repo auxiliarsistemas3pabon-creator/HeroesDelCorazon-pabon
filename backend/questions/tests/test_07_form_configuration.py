@@ -12,6 +12,7 @@ class FormConfigurationTests(APITestCase):
     def setUp(self):
         Evaluation.objects.update(monthly_limit=3)  # programmed with the default quota
         self.boss = create_user("boss.demo", User.Role.BOSS)
+        Evaluation.objects.filter(created_by__isnull=True).update(created_by=self.boss)
         self.me = create_user("me.demo", User.Role.COLLABORATOR)
         self.other = create_user("other.demo", User.Role.COLLABORATOR)
         self.evaluation = Evaluation.objects.get()  # the one created by the data migration

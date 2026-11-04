@@ -95,6 +95,9 @@ class ClosedEvaluationReadOnlyTests(APITestCase):
             self.assertEqual(response.status_code, 403)
             evaluations = self.client.get("/api/v1/questions/evaluations/").data
 
-        self.assertEqual(evaluations[0]["status"], "closed")
+            self.assertEqual(
+                next(item for item in evaluations if item["id"] == self.evaluation.pk)["status"],
+                "closed",
+            )
         self.evaluation.refresh_from_db()
         self.assertEqual(self.evaluation.name, "Evaluación cerrada")

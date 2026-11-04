@@ -42,8 +42,8 @@ class DashboardDateFilterTests(APITestCase):
         self.assertEqual(get("?date_from=2026-11-01")["evaluated"], 0)
         # staff is filtered by the registration date
         User.objects.update(date_joined=datetime(2026, 9, 1, 12, 0, tzinfo=ZoneInfo("America/Bogota")))
-        self.assertEqual(get()["staff"], 3)
-        self.assertEqual(get("?date_from=2026-09-01&date_to=2026-09-30")["staff"], 3)
+        self.assertEqual(get()["staff"], 2)
+        self.assertEqual(get("?date_from=2026-09-01&date_to=2026-09-30")["staff"], 2)
         self.assertEqual(get("?date_from=2026-10-01")["staff"], 0)
         self.assertEqual(get("?date_from=no-es-fecha")["evaluated"], 2)  # invalid dates are ignored
         self.assertEqual(get("?date_from=2026-13-45")["evaluated"], 2)

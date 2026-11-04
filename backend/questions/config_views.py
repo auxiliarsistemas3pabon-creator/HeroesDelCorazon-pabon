@@ -23,7 +23,12 @@ from users.models import User
 from .limits import monthly_limit as evaluation_limit
 from .limits import scored_this_month
 from .models import Category, Criterion, Evaluation, EvaluationSetting, Question
-from .staff_import import AnswersFileError, import_evaluations, read_table
+from .staff_import import (
+    AnswersFileError,
+    import_answers,
+    import_evaluations,
+    read_table,
+)
 
 
 # Category.code and Criterion.code are unique across all evaluations, so slugs get a numeric suffix on collision.
@@ -464,6 +469,8 @@ class CategoriesView(APIView):
         closed_response = _closed(evaluation, request.user)
         if closed_response:
             return closed_response
+        if evaluation.questions.exists():
+            return _bad("evaluation", _("An evaluation with answers cannot be changed."))
         name = _clean(request.data.get("name"))
         raw = request.data.get("criteria")
         questions = [_clean(q) for q in raw] if isinstance(raw, list) else []
@@ -498,6 +505,12 @@ class CategoryDetailView(APIView):
         closed_response = _closed(category.evaluation, request.user)
         if closed_response:
             return closed_response
+        if (
+            request.data.get("is_active") is True
+            and not category.is_active
+            and Question.objects.filter(category=category.code).exists()
+        ):
+            return _bad("is_active", _("A category with answers cannot be reactivated."))
         return _apply_changes(category, request.data) or Response(_listing(category.evaluation))
 
     @transaction.atomic
@@ -532,6 +545,8 @@ class CategoryCriteriaView(APIView):
         closed_response = _closed(category.evaluation, request.user)
         if closed_response:
             return closed_response
+        if category.evaluation.questions.exists():
+            return _bad("evaluation", _("An evaluation with answers cannot be changed."))
         text = _clean(request.data.get("name"))
         if not text:
             return _bad("name", _("Enter a name."))
@@ -556,6 +571,12 @@ class CriterionDetailView(APIView):
         closed_response = _closed(criterion.category.evaluation, request.user)
         if closed_response:
             return closed_response
+        if (
+            request.data.get("is_active") is True
+            and not criterion.is_active
+            and Question.objects.filter(criterion=criterion.code).exists()
+        ):
+            return _bad("is_active", _("A question with answers cannot be reactivated."))
         return _apply_changes(criterion, request.data) or Response(_listing(criterion.category.evaluation))
 
     def delete(self, request, pk):
@@ -593,6 +614,30 @@ class EvaluationImportView(APIView):
             table = read_table(file, file.name)
             with transaction.atomic():
                 result = import_evaluations(table, created_by=request.user)
+        except AnswersFileError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(result)
+
+
+class AnswersImportView(APIView):
+    """Boss: imports submitted answers from an Excel or CSV file."""
+
+    permission_classes = [IsBossOrSuperAdmin]
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        if file is None:
+            return _bad("file", _("Attach an Excel (.xlsx) or CSV file."))
+        raw_evaluation = request.data.get("evaluation")
+        default_evaluation = None
+        if raw_evaluation not in (None, ""):
+            default_evaluation = _evaluation_of(raw_evaluation, request.user)
+            if default_evaluation is None:
+                return _bad("evaluation", _("Choose an evaluation."))
+        try:
+            table = read_table(file, file.name)
+            result = import_answers(table, default_evaluation)
         except AnswersFileError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(result)

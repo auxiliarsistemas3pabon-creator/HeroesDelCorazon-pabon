@@ -1,5 +1,7 @@
+from datetime import timedelta
 from unittest.mock import patch
 
+from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from users.models import User
@@ -17,11 +19,17 @@ class IndependentEvaluationsTests(APITestCase):
     def setUp(self):
         Evaluation.objects.update(monthly_limit=3)  # programmed with the default quota
         self.boss = create_user("boss.demo", User.Role.BOSS)
+        Evaluation.objects.filter(created_by__isnull=True).update(created_by=self.boss)
         self.me = create_user("me.demo", User.Role.COLLABORATOR)
         self.others = [create_user(f"o{i}.demo", User.Role.COLLABORATOR) for i in range(3)]
         self.first = Evaluation.objects.get()
         self.client.force_authenticate(self.boss)
         self.second = self.client.post(self.EVALUATIONS, {"name": "Evaluación de liderazgo"}, format="json").data
+        self.client.patch(
+            f"{self.EVALUATIONS}{self.second['id']}/",
+            {"closes_on": (timezone.localdate() + timedelta(days=30)).isoformat()},
+            format="json",
+        )
         self.client.post(
             self.CATEGORIES,
             {"evaluation": self.second["id"], "name": "Liderazgo", "criteria": ["Motiva al equipo.", "Decide a tiempo."]},
@@ -95,6 +103,11 @@ class IndependentEvaluationsTests(APITestCase):
         self.assertEqual(self.client.delete(f"{self.EVALUATIONS}{self.first.pk}/").status_code, 204 if not self.first.questions.exists() else 400)
         # one with answers cannot be deleted
         third = self.client.post(self.EVALUATIONS, {"name": "Tercera"}, format="json").data
+        self.client.patch(
+            f"{self.EVALUATIONS}{third['id']}/",
+            {"closes_on": (timezone.localdate() + timedelta(days=30)).isoformat()},
+            format="json",
+        )
         self.client.post(self.CATEGORIES, {"evaluation": third["id"], "name": "C", "criteria": ["p"]}, format="json")
         self.send(third["id"], self.others[0], self.codes(third["id"]))
         self.client.force_authenticate(self.boss)

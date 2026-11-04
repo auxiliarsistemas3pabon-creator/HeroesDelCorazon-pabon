@@ -9,15 +9,16 @@ from .helpers import CRITERIA, create_user
 class AnswersImportTests(APITestCase):
     """Answers loaded from an Excel or CSV: one row per (evaluation, collaborator, colleague)."""
 
-    URL = "/api/v1/questions/import/"
+    URL = "/api/v1/questions/answers/import/"
 
     def setUp(self):
         Evaluation.objects.update(monthly_limit=3)  # programmed with the default quota
         self.boss = create_user("boss.demo", User.Role.BOSS)
         self.ana = create_user("1001", User.Role.COLLABORATOR)
-        self.luis = create_user("1002", User.Role.COLLABORATOR)
-        self.eva = create_user("1003", User.Role.COLLABORATOR)
+        self.luis = create_user("1002", User.Role.PERSONAL)
+        self.eva = create_user("1003", User.Role.PERSONAL)
         self.first = Evaluation.objects.get()
+        Evaluation.objects.filter(pk=self.first.pk, created_by__isnull=True).update(created_by=self.boss)
         self.client.force_authenticate(self.boss)
         made = self.client.post("/api/v1/questions/evaluations/", {"name": "Liderazgo"}, format="json").data
         self.second = Evaluation.objects.get(pk=made["id"])
@@ -53,7 +54,7 @@ class AnswersImportTests(APITestCase):
         r = self.upload(self.csv_file([
             self.row(self.first.name, "1001", "1002"),
             self.row("Liderazgo", "1001", "1002", score=5),         # same pair, other evaluation: allowed
-            self.row(str(self.second.pk), "1002", "1003"),          # evaluation by id
+            self.row(str(self.second.pk), "1001", "1003"),          # evaluation by id
         ]))
         self.assertEqual((r.status_code, r.data["created"], r.data["skipped"], r.data["errors"]), (200, 3, 0, []))
         self.assertEqual(Question.objects.filter(evaluation=self.first).count(), 12)
@@ -69,8 +70,8 @@ class AnswersImportTests(APITestCase):
             self.row(self.first.name, "1001", "1001"),               # scores themselves
             self.row(self.first.name, "9999", "1002"),               # unknown person
             self.row("No existe", "1001", "1002"),                   # unknown evaluation
-            self.row(self.first.name, "1002", "1003", score=9),      # score out of range
-            self.row(self.first.name, "1002", "1001", score=3),      # fine
+            self.row(self.first.name, "1001", "1003", score=9),      # score out of range
+            self.row(self.first.name, "1001", "1003", score=3),      # fine
         ]))
         self.assertEqual((r.data["created"], r.data["skipped"], len(r.data["errors"])), (1, 1, 4))
         self.assertIn("Fila 3", r.data["errors"][0])
