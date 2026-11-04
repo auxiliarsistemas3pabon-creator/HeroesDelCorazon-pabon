@@ -63,7 +63,7 @@ jobs:
       DJANGO_SETTINGS_MODULE: config.settings.dev
       DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production-use
       DJANGO_DEBUG: "True"
-      POSTGRES_DB: HeroesDelCorazon
+      POSTGRES_DB: heroesdelcorazon
       POSTGRES_USER: heroes_user
       POSTGRES_PASSWORD: heroes_pass
       POSTGRES_HOST: localhost
