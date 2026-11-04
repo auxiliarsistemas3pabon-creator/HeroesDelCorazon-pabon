@@ -5,8 +5,8 @@ name: Backend CI
 on:
   push:
     branches: [ "main" ]
-  paths:
-    - "backend/**"
+    paths:
+      - "backend/**"
 
   pull_request:
     branches: [ "main" ]
@@ -86,4 +86,3 @@ jobs:
       
       - name: Tests
         run: pytest 
-
