@@ -1,4 +1,4 @@
-name: heroes_corazon
+name: heroes_del_corazon_pabon
 
 # Production (run from this folder): docker compose -f docker-compose.prod.yml up -d --build
 # Required variables (in a .env next to this file or exported): see .env.example.
@@ -8,7 +8,7 @@ services:
     image: postgres:16-alpine
     restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-HeroesDelCorazon}
+      POSTGRES_DB: ${POSTGRES_DB:-heroesdelcorazon}
       POSTGRES_USER: ${POSTGRES_USER:-heroes_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD}
     volumes:
@@ -20,7 +20,6 @@ services:
       retries: 10
 
   backend:
-    container_name: backend
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -31,7 +30,7 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings.prod
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?define DJANGO_SECRET_KEY}
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:?define DJANGO_ALLOWED_HOSTS}
-      POSTGRES_DB: ${POSTGRES_DB:-HeroesDelCorazon}
+      POSTGRES_DB: ${POSTGRES_DB:-heroesdelcorazon}
       POSTGRES_USER: ${POSTGRES_USER:-heroes_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD}
       POSTGRES_HOST: db
@@ -56,4 +55,5 @@ services:
 
 volumes:
   postgres_data:
-    name: heroes_api_postgres_data  # volumen existente con los datos; no renombrar
+    name: heroes_api_postgres_data
+    external: true

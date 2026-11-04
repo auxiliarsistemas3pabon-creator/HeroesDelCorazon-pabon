@@ -1,10 +1,10 @@
-name: heroes_corazon
+name: heroes_del_corazon_pabon
 
 # Development (run from this folder): docker compose up --build
-#   API     http://localhost:${API_PORT:-8000}          (admin at /admin/)
-#   Mailpit http://localhost:${MAILPIT_UI_PORT:-8025}   (password recovery emails)
+#   API     http://localhost:${API_PORT:-8001}          (admin at /admin/)
+#   Mailpit http://localhost:${MAILPIT_UI_PORT:-8026}   (password recovery emails)
 # If those ports are busy, set API_PORT / MAILPIT_UI_PORT. The database is only reachable as host `db`.
-# The frontend runs separately (npm run dev in frontend/) and proxies /api to :8000.
+# The frontend runs separately (npm run dev in frontend/) and proxies /api to :8001.
 #
 # Import evaluation forms (CSV/XLSX columns: evaluation, category, question):
 #   docker compose exec backend python manage.py import_questions data/evaluations.xlsx
@@ -13,7 +13,7 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-HeroesDelCorazon}
+      POSTGRES_DB: ${POSTGRES_DB:-heroesdelcorazon}
       POSTGRES_USER: ${POSTGRES_USER:-heroes_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-heroes_pass}
     volumes:
@@ -30,10 +30,9 @@ services:
     image: axllent/mailpit:latest
     restart: unless-stopped
     ports:
-      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_UI_PORT:-8026}:8025"
 
   backend:
-    container_name: backend
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -45,7 +44,7 @@ services:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-only-secret-key-not-for-production-use}
       DJANGO_DEBUG: "True"
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
-      POSTGRES_DB: ${POSTGRES_DB:-HeroesDelCorazon}
+      POSTGRES_DB: ${POSTGRES_DB:-heroesdelcorazon}
       POSTGRES_USER: ${POSTGRES_USER:-heroes_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-heroes_pass}
       POSTGRES_HOST: db
@@ -60,7 +59,7 @@ services:
     volumes:
       - .:/app
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "${API_PORT:-8001}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -69,4 +68,5 @@ services:
 
 volumes:
   postgres_data:
-    name: heroes_api_postgres_data  # volumen existente con los datos; no renombrar
+    name: heroes_api_postgres_data
+    external: true

@@ -12,9 +12,9 @@ Este documento describe la solución para desarrollo y mantenimiento. Los requis
 | `backend/` | Django 5, Django REST Framework | API, autenticación, reglas del dominio y administración. |
 | `backend/users/` | Aplicación Django | Usuarios, roles y carga de personal. |
 | `backend/questions/` | Aplicación Django | Evaluaciones, categorías, preguntas, respuestas y reportes. |
-| PostgreSQL | PostgreSQL 16 | Persistencia. En Docker Compose usa el volumen `postgres_data`. |
+| PostgreSQL | PostgreSQL 16 | Persistencia. En Docker Compose usa el volumen persistente `heroes_api_postgres_data`. |
 
-En desarrollo, Vite sirve el frontend en `http://localhost:5173` y reenvía `/api` al backend. La API local se publica en `http://localhost:8000` (o el puerto indicado por `API_PORT`).
+En desarrollo, Vite sirve el frontend en `http://localhost:5173` y reenvía `/api` al backend. La API local se publica en `http://localhost:8001` (o el puerto indicado por `API_PORT`).
 
 ## Requisitos previos
 
@@ -34,7 +34,7 @@ El backend corre dentro de Docker en el flujo recomendado; no es necesario insta
    docker compose up --build
    ```
 
-   Django aplica migraciones al arrancar el contenedor. Mailpit permite revisar mensajes de correo localmente en `http://localhost:8025`.
+   Django aplica migraciones al arrancar el contenedor. Mailpit permite revisar mensajes de correo localmente en `http://localhost:8026`.
 
 3. En otra terminal, iniciar el frontend:
 
@@ -44,9 +44,9 @@ El backend corre dentro de Docker en el flujo recomendado; no es necesario insta
    npm run dev
    ```
 
-4. Abrir `http://localhost:5173`. La administración Django está en `http://localhost:8000/admin/`.
+4. Abrir `http://localhost:5173`. La administración Django está en `http://localhost:8001/admin/`.
 
-Si los puertos están ocupados, establecer `API_PORT` y/o `MAILPIT_UI_PORT` en `backend/.env`. El frontend usa `VITE_API_URL` para el destino del proxy; el valor de ejemplo es `http://localhost:8011`, así que en el flujo estándar debe dejarse sin definir o cambiarse a `http://localhost:8000`.
+Si los puertos están ocupados, establecer `API_PORT` y/o `MAILPIT_UI_PORT` en `backend/.env`. El frontend usa `VITE_API_URL` para el destino del proxy; su valor de ejemplo coincide con el puerto local estándar, `http://localhost:8001`.
 
 Para crear una cuenta administrativa local:
 
@@ -137,7 +137,7 @@ Las rutas del menú se configuran en `components/Layout.jsx`; al agregar una pan
 - `context/AuthContext.jsx` mantiene usuario, carga inicial, login y logout.
 - `lib/api.js` es el cliente común: usa `credentials: 'include'`, envía el token CSRF en mutaciones, serializa JSON y renueva una sesión vencida una vez.
 - El backend entrega access y refresh como cookies httpOnly. No guardar tokens de sesión en `localStorage` ni hacer `fetch` directo para endpoints autenticados; usar `api()`.
-- En desarrollo, `vite.config.js` envía `/api` al backend configurado en `VITE_API_URL` (por defecto `http://localhost:8000`). Así frontend y API comparten origen desde el navegador y se simplifica CSRF.
+- En desarrollo, `vite.config.js` envía `/api` al backend configurado en `VITE_API_URL` (por defecto `http://localhost:8001`). Así frontend y API comparten origen desde el navegador y se simplifica CSRF.
 - `lib/useEvaluationForms.js` centraliza la carga de formularios históricos para vistas que deben mostrar categorías o preguntas ya desactivadas.
 
 ### Convenciones para cambios
@@ -162,7 +162,7 @@ npm run lint
 
 ## Persistencia y operaciones
 
-El volumen Docker `postgres_data` conserva la base de datos al recrear contenedores. Eliminar ese volumen borra los datos; no usar `docker compose down -v` en un ambiente con información que deba conservarse.
+El proyecto Compose usa el nombre `heroes_del_corazon_pabon` para aislar sus servicios de los demás proyectos. La base de datos existente se conserva en el volumen externo `heroes_api_postgres_data`; no se renombra ni se crea otro volumen automáticamente. La base configurada por defecto es `heroesdelcorazon` (los nombres de bases PostgreSQL distinguen mayúsculas y minúsculas). No usar `docker compose down -v` ni eliminar ese volumen si se deben conservar los datos.
 
 Operaciones comunes desde `backend/`:
 

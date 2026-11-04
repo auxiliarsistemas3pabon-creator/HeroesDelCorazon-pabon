@@ -5,7 +5,7 @@ import { defineConfig, loadEnv } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  // VITE_API_URL (en .env) = origen del backend, sin /api/v1 (ej. http://localhost:8000).
+  // VITE_API_URL (en .env) = origen del backend, sin /api/v1 (ej. http://localhost:8001).
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
       // El front llama a /api/v1/... en su mismo origen (cookies httpOnly + CSRF sin CORS)
       // y Vite reenvía esas peticiones al backend.
       proxy: {
-        '/api': env.VITE_API_URL || 'http://localhost:8000',
+        '/api': env.VITE_API_URL || 'http://localhost:8001',
       },
     },
   }

@@ -19,6 +19,8 @@ env/
 ENV/
 biometricapi_env/
 
+heroes_corazon.sql
+
 #data
 data/
 
