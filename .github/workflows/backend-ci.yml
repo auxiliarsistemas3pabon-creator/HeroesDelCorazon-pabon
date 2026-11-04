@@ -8,9 +8,11 @@ on:
   paths:
     - "backend/**"
 
-  pull-request:
+  pull_request:
     branches: [ "main" ]
-    - ".github/workflows/backend-ci.yml"
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
 
 defaults:
   run:
