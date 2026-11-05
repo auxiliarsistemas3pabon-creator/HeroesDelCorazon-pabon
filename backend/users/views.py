@@ -145,11 +145,10 @@ class MeView(APIView):
 
 
 class RegisterView(generics.CreateAPIView):
-    """Public sign-up: always creates a collaborator (bosses are created by an admin / the CSV import)."""
+    """Create a collaborator only through an authenticated superadmin."""
 
     serializer_class = RegisterSerializer
-    authentication_classes: list = []
-    permission_classes = [AllowAny]
+    permission_classes = [IsSuperAdmin]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "login"
 

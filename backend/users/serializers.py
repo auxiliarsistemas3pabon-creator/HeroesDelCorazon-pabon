@@ -44,7 +44,7 @@ class AuthenticatedUserSerializer(UserSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer[User]):
-    """Auto-registro publico. No expone role: create_user lo deja siempre como collaborator."""
+    """Superadmin-managed collaborator creation. Role is never accepted from the request."""
     password = serializers.CharField(write_only=True, required=True, min_length=8)
 
     class Meta:
