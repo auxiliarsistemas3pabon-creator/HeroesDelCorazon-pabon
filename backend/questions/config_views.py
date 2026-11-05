@@ -1,7 +1,7 @@
-"""Boss-only management of the evaluations: each one has its own categories and their criteria (questions).
+"""Vistas de configuración, programación e importación de evaluaciones.
 
-Every criterion is scored from 1 to 5 (the scale is fixed). A category or criterion that already has
-scores cannot be deleted (it would break the history): it is deactivated and leaves the new forms.
+Las escrituras administrativas requieren jefe o superadmin y respetan pertenencia del formulario.
+Los registros con respuestas se conservan para no romper el historial.
 """
 
 from django.db import transaction
@@ -150,9 +150,11 @@ def _apply_changes(obj, data):
 
 
 class EvaluationsView(AuditLogMixin, APIView):
-    """GET: the boss sees their own evaluations; a collaborator only sees the open ones.
-    POST (boss): creates an independent evaluation and its categories/questions: {"name": "...", "categories": [...]}.
-    The categories field is optional for compatibility with clients that create them separately."""
+    """GET/POST /questions/evaluations/: lista evaluaciones visibles o crea un formulario independiente.
+
+    Los colaboradores reciben solo formularios abiertos que correspondan a su área/elegibilidad, con su cupo.
+    Jefes y superadmins pueden crear formularios con categorías y criterios; las escrituras las audita AuditLogMixin.
+    """
 
     permission_classes = [IsAuthenticated]
 
@@ -237,7 +239,11 @@ class EvaluationsView(AuditLogMixin, APIView):
 
 
 class EvaluationDetailView(AuditLogMixin, APIView):
-    """PATCH evaluation details/open state or DELETE only while it has no answers."""
+    """PATCH/DELETE /questions/evaluations/<id>/: edita, cierra o elimina una evaluación sin respuestas.
+
+    El jefe solo modifica sus evaluaciones. Reprogramar inicia una nueva ronda; una evaluación con respuestas
+    no puede eliminarse, para preservar el historial.
+    """
 
     permission_classes = [IsBossOrSuperAdmin]
 
@@ -350,7 +356,7 @@ class EvaluationDetailView(AuditLogMixin, APIView):
 
 
 class EvaluationProgramCreateView(AuditLogMixin, APIView):
-    """Creates a separately scheduled copy of an evaluation form."""
+    """POST /questions/evaluations/<id>/programs/: crea una copia independiente ya programada."""
 
     permission_classes = [IsBossOrSuperAdmin]
 
@@ -450,9 +456,11 @@ class EvaluationProgramCreateView(AuditLogMixin, APIView):
 
 
 class CategoriesView(AuditLogMixin, APIView):
-    """GET ?evaluation=<id>: the categories of that evaluation with their criteria (and whether they already
-    have scores). POST: creates a category together with its criteria, inside ONE evaluation:
-    {"evaluation": 1, "name": "...", "criteria": ["question 1", "question 2"]}. Other evaluations are untouched."""
+    """GET/POST /questions/categories/: consulta categorías o crea una con criterios en una evaluación.
+
+    GET exige ?evaluation=<id>. POST requiere evaluation, name y una lista criteria; no altera otros formularios.
+    Solo un jefe/superadmin con acceso de escritura puede modificar la evaluación.
+    """
 
     permission_classes = [IsBossOrSuperAdmin]
 
@@ -495,7 +503,7 @@ class CategoriesView(AuditLogMixin, APIView):
 
 
 class CategoryDetailView(AuditLogMixin, APIView):
-    """PATCH {name?, is_active?} or DELETE (only while it has no scores)."""
+    """PATCH/DELETE /questions/categories/<id>/: actualiza, desactiva o elimina una categoría sin respuestas."""
 
     permission_classes = [IsBossOrSuperAdmin]
 
@@ -535,7 +543,7 @@ class CategoryDetailView(AuditLogMixin, APIView):
 
 
 class CategoryCriteriaView(AuditLogMixin, APIView):
-    """POST {name}: adds a question to the category."""
+    """POST /questions/categories/<id>/criteria/: agrega un criterio antes de que haya respuestas."""
 
     permission_classes = [IsBossOrSuperAdmin]
 
@@ -561,7 +569,7 @@ class CategoryCriteriaView(AuditLogMixin, APIView):
 
 
 class CriterionDetailView(AuditLogMixin, APIView):
-    """PATCH {name?, is_active?} or DELETE (only while it has no scores)."""
+    """PATCH/DELETE /questions/criteria/<id>/: actualiza, desactiva o elimina un criterio sin respuestas."""
 
     permission_classes = [IsBossOrSuperAdmin]
 
@@ -598,9 +606,10 @@ class CriterionDetailView(AuditLogMixin, APIView):
 
 
 class EvaluationImportView(AuditLogMixin, APIView):
-    """Boss: imports evaluation forms from rows of evaluation, category and question names.
+    """POST /questions/import/: jefe o superadmin importa formularios desde Excel o CSV.
 
-    Repeated rows form one evaluation with multiple categories/questions. Existing evaluations are skipped.
+    Cada fila indica evaluación, categoría y criterio; evaluaciones existentes se omiten.
+    Los errores de lectura producen HTTP 400 y la operación de importación se ejecuta en una transacción.
     """
 
     permission_classes = [IsBossOrSuperAdmin]
@@ -621,7 +630,7 @@ class EvaluationImportView(AuditLogMixin, APIView):
 
 
 class AnswersImportView(AuditLogMixin, APIView):
-    """Boss: imports submitted answers from an Excel or CSV file."""
+    """POST /questions/answers/import/: jefe o superadmin carga entregas desde Excel o CSV."""
 
     permission_classes = [IsBossOrSuperAdmin]
     parser_classes = [MultiPartParser]
