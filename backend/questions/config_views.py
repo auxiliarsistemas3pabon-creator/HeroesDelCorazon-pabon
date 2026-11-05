@@ -16,6 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from audit.mixins import AuditLogMixin
 from common.permissions import MANAGER_ROLES, IsBossOrSuperAdmin, owned_by
 from users.areas import is_removed_area
 from users.models import User
@@ -148,7 +149,7 @@ def _apply_changes(obj, data):
     return None
 
 
-class EvaluationsView(APIView):
+class EvaluationsView(AuditLogMixin, APIView):
     """GET: the boss sees their own evaluations; a collaborator only sees the open ones.
     POST (boss): creates an independent evaluation and its categories/questions: {"name": "...", "categories": [...]}.
     The categories field is optional for compatibility with clients that create them separately."""
@@ -235,7 +236,7 @@ class EvaluationsView(APIView):
         return Response(_evaluation_data(evaluation), status=status.HTTP_201_CREATED)
 
 
-class EvaluationDetailView(APIView):
+class EvaluationDetailView(AuditLogMixin, APIView):
     """PATCH evaluation details/open state or DELETE only while it has no answers."""
 
     permission_classes = [IsBossOrSuperAdmin]
@@ -348,7 +349,7 @@ class EvaluationDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class EvaluationProgramCreateView(APIView):
+class EvaluationProgramCreateView(AuditLogMixin, APIView):
     """Creates a separately scheduled copy of an evaluation form."""
 
     permission_classes = [IsBossOrSuperAdmin]
@@ -448,7 +449,7 @@ class EvaluationProgramCreateView(APIView):
         return Response(_evaluation_data(programmed), status=status.HTTP_201_CREATED)
 
 
-class CategoriesView(APIView):
+class CategoriesView(AuditLogMixin, APIView):
     """GET ?evaluation=<id>: the categories of that evaluation with their criteria (and whether they already
     have scores). POST: creates a category together with its criteria, inside ONE evaluation:
     {"evaluation": 1, "name": "...", "criteria": ["question 1", "question 2"]}. Other evaluations are untouched."""
@@ -493,7 +494,7 @@ class CategoriesView(APIView):
         return Response(_listing(evaluation), status=status.HTTP_201_CREATED)
 
 
-class CategoryDetailView(APIView):
+class CategoryDetailView(AuditLogMixin, APIView):
     """PATCH {name?, is_active?} or DELETE (only while it has no scores)."""
 
     permission_classes = [IsBossOrSuperAdmin]
@@ -533,7 +534,7 @@ class CategoryDetailView(APIView):
         return Response(_listing(evaluation))
 
 
-class CategoryCriteriaView(APIView):
+class CategoryCriteriaView(AuditLogMixin, APIView):
     """POST {name}: adds a question to the category."""
 
     permission_classes = [IsBossOrSuperAdmin]
@@ -559,7 +560,7 @@ class CategoryCriteriaView(APIView):
         return Response(_listing(category.evaluation), status=status.HTTP_201_CREATED)
 
 
-class CriterionDetailView(APIView):
+class CriterionDetailView(AuditLogMixin, APIView):
     """PATCH {name?, is_active?} or DELETE (only while it has no scores)."""
 
     permission_classes = [IsBossOrSuperAdmin]
@@ -596,7 +597,7 @@ class CriterionDetailView(APIView):
         return Response(_listing(evaluation))
 
 
-class EvaluationImportView(APIView):
+class EvaluationImportView(AuditLogMixin, APIView):
     """Boss: imports evaluation forms from rows of evaluation, category and question names.
 
     Repeated rows form one evaluation with multiple categories/questions. Existing evaluations are skipped.
@@ -619,7 +620,7 @@ class EvaluationImportView(APIView):
         return Response(result)
 
 
-class AnswersImportView(APIView):
+class AnswersImportView(AuditLogMixin, APIView):
     """Boss: imports submitted answers from an Excel or CSV file."""
 
     permission_classes = [IsBossOrSuperAdmin]

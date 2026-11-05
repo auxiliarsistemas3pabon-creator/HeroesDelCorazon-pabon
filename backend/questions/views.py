@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from audit.mixins import AuditLogMixin
 from common.permissions import (
     MANAGER_ROLES,
     IsBossOrSuperAdmin,
@@ -63,7 +64,7 @@ def _in_range(request, qs, field="created_at"):
         qs = qs.filter(**{f"{field}__date__lte": end})
     return qs
 
-class QuestionFormView(APIView):
+class QuestionFormView(AuditLogMixin, APIView):
     """Categories and criteria of ONE evaluation (?evaluation=<id>; optional when there is a single open one).
 
     Only the active ones, unless ?include_inactive=1. The read-only tables (review, results) ask for the
@@ -105,7 +106,7 @@ class QuestionFormView(APIView):
         return Response(data)
 
 
-class QuestionsView(APIView):
+class QuestionsView(AuditLogMixin, APIView):
     """GET: the boss sees every score, a collaborator only the approved ones they received.
     POST: a collaborator scores a colleague of their area (12 criteria)."""
 
@@ -160,7 +161,7 @@ def _grouped(qs):
     return list(groups.values())
 
 
-class SubmissionsView(APIView):
+class SubmissionsView(AuditLogMixin, APIView):
     """Evaluations sent by the collaborators, newest first.
 
     Read-only for the boss: an evaluation counts as soon as it is sent.
@@ -185,7 +186,7 @@ class SubmissionsView(APIView):
         return Response(_grouped(qs))
 
 
-class SentView(APIView):
+class SentView(AuditLogMixin, APIView):
     """The evaluations the logged collaborator has sent, newest first."""
 
     permission_classes = [IsCollaborator]
@@ -194,7 +195,7 @@ class SentView(APIView):
         return Response(_grouped(Question.objects.filter(collaborator=request.user)))
 
 
-class ResultsView(APIView):
+class ResultsView(AuditLogMixin, APIView):
     """Final score (average of the scores) of the logged user: overall and, for each evaluation, by category."""
 
     permission_classes = [IsAuthenticated]
@@ -226,7 +227,7 @@ class ResultsView(APIView):
         })
 
 
-class ResultsSummaryView(APIView):
+class ResultsSummaryView(AuditLogMixin, APIView):
     """Boss: scores for their own evaluations, by category and overall, for one or all (?evaluation=all).
 
     Without ?evaluation it uses the first evaluation that has answers. The boss of an area only sees people of it.
@@ -287,7 +288,7 @@ class ResultsSummaryView(APIView):
         })
 
 
-class CategoryAveragesView(APIView):
+class CategoryAveragesView(AuditLogMixin, APIView):
     """Boss: average of the scores by category, for one person (?personal=<id>) and/or one evaluation
     (?evaluation=<id>); without them, for everyone and every evaluation."""
 
@@ -337,7 +338,7 @@ class CategoryAveragesView(APIView):
 
 # Scope: a boss with an area only sees people of that area; a boss without area only counts people already evaluated
 # in their own evaluations (hence the pk__in filter on own_answers below).
-class StatsView(APIView):
+class StatsView(AuditLogMixin, APIView):
     """Count of evaluated (approved) vs pending collaborators, total and per area, for the dashboard."""
 
     permission_classes = [IsBossOrSuperAdmin]
@@ -370,7 +371,7 @@ class StatsView(APIView):
         })
 
 
-class SettingsView(APIView):
+class SettingsView(AuditLogMixin, APIView):
     """Boss: reads and sets a monthly colleague limit globally or for one evaluation."""
 
     permission_classes = [IsBossOrSuperAdmin]
@@ -413,7 +414,7 @@ class SettingsView(APIView):
         return Response(data)
 
 
-class QuotaView(APIView):
+class QuotaView(AuditLogMixin, APIView):
     """How many colleagues the collaborator can still score this month in an evaluation (?evaluation=<id>),
     and who was already scored."""
 
@@ -434,7 +435,7 @@ class QuotaView(APIView):
 
 # Scope trap: the boss branch counts only collaborators, while the collaborator branch counts every active user
 # (bosses included) of their own area.
-class DashboardView(APIView):
+class DashboardView(AuditLogMixin, APIView):
     """Staff and evaluated-people counts (per area and overall) for the dashboard of both roles.
 
     evaluated = distinct people who already have an evaluation (a score reviewed by the boss).
