@@ -1,7 +1,10 @@
+"""Integración de auditoría y publicación de eventos con las vistas DRF."""
+
 from rest_framework import status
 
 from .logging import record_event
 
+# Mapea (nombre de ruta, método) a (tipo de evento, audiencia WebSocket).
 REALTIME_ENDPOINTS = {
     ("questions", "POST"): ("questions.submitted", "managers"),
     ("question-evaluations", "POST"): ("evaluations.updated", "all"),
@@ -23,6 +26,12 @@ REALTIME_ENDPOINTS = {
 
 
 class AuditLogMixin:
+    """Audita solicitudes mutantes y publica los eventos realtime asociados si tienen éxito.
+
+    No captura datos de entrada/salida. Los errores HTTP también se auditan; solo las
+    respuestas exitosas generan notificaciones WebSocket.
+    """
+
     def finalize_response(self, request, response, *args, **kwargs):
         response = super().finalize_response(request, response, *args, **kwargs)
         if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:

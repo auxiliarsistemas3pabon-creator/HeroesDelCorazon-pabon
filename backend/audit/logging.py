@@ -1,9 +1,17 @@
+"""Emisión de eventos de auditoría estructurados al sistema de logs de Django.
+
+Los eventos se escriben en stdout mediante el logger ``audit``; este módulo no persiste
+datos en PostgreSQL. Evita adjuntar cuerpos, contraseñas, cookies o tokens.
+"""
+
 import json
 import logging
 from datetime import UTC, datetime
 
 
 class AuditJSONFormatter(logging.Formatter):
+    """Serializa cada evento de auditoría como una línea JSON con fecha UTC."""
+
     def format(self, record):
         payload = {
             "timestamp": datetime.now(UTC).isoformat(),
@@ -23,6 +31,11 @@ def record_event(
     resource_id=None,
     metadata=None,
 ):
+    """Registra una acción sin incluir credenciales ni contenido de la solicitud.
+
+    ``request`` aporta actor, endpoint, método, IP y código HTTP; para eventos
+    no asociados a una petición se puede pasar ``actor`` directamente.
+    """
     user = getattr(request, "user", None) if request is not None else actor
     event = {
         "action": action,

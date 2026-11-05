@@ -1,0 +1,1 @@
+"""Auditoría de acciones API mediante logs estructurados, sin persistencia de dominio."""
