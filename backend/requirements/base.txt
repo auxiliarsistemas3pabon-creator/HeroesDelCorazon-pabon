@@ -1,6 +1,9 @@
 # --- Core ---
 Django==5.2.17
 djangorestframework==3.18.0
+channels==4.3.2
+channels-redis==4.3.0
+daphne==4.2.1
 django-environ==0.14.0
 django-cors-headers==4.9.0
 django-filter==26.1
