@@ -29,7 +29,7 @@ const ROLE_LABELS = { boss: 'Coordinador', superadmin: 'Administrador', collabor
 // Layout de todas las páginas autenticadas: cabecera, menú lateral y <Outlet/> con la página activa.
 // Actúa también de guardia de sesión (ver redirecciones abajo).
 export function Layout() {
-  const { user, loading, logout } = useAuth()
+  const { user, loading, logout, realtimeStatus, realtimeNotice } = useAuth()
   const [open, setOpen] = useState(false)
 
   // Mientras AuthContext consulta /auth/me/ no se redirige: evitaría un rebote a /login en cada recarga.
@@ -64,6 +64,17 @@ export function Layout() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <span
+              className="hidden items-center gap-1.5 text-xs text-app-muted sm:flex"
+              role="status"
+              aria-label={realtimeStatus === 'connected' ? 'WebSocket conectado' : 'WebSocket reconectando'}
+            >
+              <span className={cn(
+                'h-2 w-2 rounded-full',
+                realtimeStatus === 'connected' ? 'bg-green-500' : 'bg-amber-500',
+              )} />
+              {realtimeStatus === 'connected' ? 'En vivo' : 'Reconectando'}
+            </span>
             <div className="hidden items-center gap-2 rounded-lg border border-app bg-app-muted px-3 py-2 sm:flex">
               <User size={16} className="text-app-muted" />
               <span className="text-sm font-medium text-app">{user.first_name} {user.last_name}</span>
@@ -123,6 +134,15 @@ export function Layout() {
           <Outlet />
         </main>
       </div>
+      {realtimeNotice && (
+        <div
+          className="toast-enter fixed bottom-4 right-4 z-50 max-w-sm rounded-lg border border-app bg-surface px-4 py-3 text-sm text-app shadow-lg"
+          role="status"
+          aria-live="polite"
+        >
+          {realtimeNotice}
+        </div>
+      )}
     </div>
   )
 }
