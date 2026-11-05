@@ -1,3 +1,5 @@
+"""Autenticación ASGI de WebSocket mediante la cookie JWT de acceso."""
+
 from http.cookies import CookieError, SimpleCookie
 
 from channels.db import database_sync_to_async
@@ -10,6 +12,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 
 @database_sync_to_async
 def _user_for_token(raw_token):
+    """Valida firma/expiración JWT y carga un usuario activo de forma async-safe."""
     try:
         authentication = JWTAuthentication()
         token = authentication.get_validated_token(raw_token)
@@ -21,6 +24,8 @@ def _user_for_token(raw_token):
 
 
 class JwtCookieAuthMiddleware:
+    """Inyecta ``user`` y la expiración JWT en el scope de cada conexión."""
+
     def __init__(self, app):
         self.app = app
 

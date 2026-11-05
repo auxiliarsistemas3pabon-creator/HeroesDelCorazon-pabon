@@ -1,0 +1,1 @@
+"""Notificaciones WebSocket autenticadas mediante Django Channels y Redis."""

@@ -1,3 +1,5 @@
+"""Consumidor WebSocket de eventos de aplicación, agrupado por rol autenticado."""
+
 import asyncio
 import json
 import time
@@ -8,6 +10,12 @@ from users.models import User
 
 
 class EventsConsumer(AsyncWebsocketConsumer):
+    """Entrega notificaciones mínimas a usuarios autenticados y cierra sesiones no válidas.
+
+    Solo acepta boss, superadmin y collaborator sin cambio de contraseña pendiente.
+    No acepta mensajes del cliente y cierra el socket cuando vence el access token.
+    """
+
     async def connect(self):
         user = self.scope.get("user")
         if (

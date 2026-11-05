@@ -1,3 +1,5 @@
+"""Rutas ASGI de WebSocket expuestas por el proyecto."""
+
 from django.urls import path
 
 from .consumers import EventsConsumer
