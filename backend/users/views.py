@@ -19,6 +19,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from audit.mixins import AuditLogMixin
 from common.permissions import IsBossOrSuperAdmin, IsSuperAdmin
 
 from .areas import is_removed_area
@@ -68,7 +69,7 @@ def _clear_auth_cookies(response):
     response.delete_cookie(settings.AUTH_COOKIE_REFRESH_NAME, path=REFRESH_COOKIE_PATH)
 
 
-class LoginView(APIView):
+class LoginView(AuditLogMixin, APIView):
     """Login por username/password. Responde con el usuario y deja los tokens en cookies.
 
         Sin autenticacion previa (authentication_classes vacio). django-axes bloquea por par usuario+IP.
@@ -99,7 +100,7 @@ class LoginView(APIView):
         return response
 
 
-class RefreshView(APIView):
+class RefreshView(AuditLogMixin, APIView):
     """Rota el refresh token de la cookie: lista en negra el anterior y emite un par nuevo (anti-replay)."""
     authentication_classes: list = []
     permission_classes = [AllowAny]
@@ -120,7 +121,7 @@ class RefreshView(APIView):
         return response
 
 
-class LogoutView(APIView):
+class LogoutView(AuditLogMixin, APIView):
     """Invalida el refresh token y limpia cookies. Es idempotente: no falla aunque la sesion ya no exista."""
     authentication_classes: list = []
     permission_classes = [AllowAny]
@@ -137,14 +138,14 @@ class LogoutView(APIView):
         return response
 
 
-class MeView(APIView):
+class MeView(AuditLogMixin, APIView):
     """Usuario autenticado actual. Tambien emite la cookie CSRF que el frontend necesita para peticiones mutantes."""
     def get(self, request):
         get_token(request)
         return Response(AuthenticatedUserSerializer(request.user).data)
 
 
-class RegisterView(generics.CreateAPIView):
+class RegisterView(AuditLogMixin, generics.CreateAPIView):
     """Create a collaborator only through an authenticated superadmin."""
 
     serializer_class = RegisterSerializer
@@ -153,7 +154,7 @@ class RegisterView(generics.CreateAPIView):
     throttle_scope = "login"
 
 
-class StaffImportView(APIView):
+class StaffImportView(AuditLogMixin, APIView):
     """Superadmin: uploads an Excel (.xlsx) with the staff. Existing document numbers are skipped, never duplicated."""
 
     permission_classes = [IsSuperAdmin]
@@ -171,7 +172,7 @@ class StaffImportView(APIView):
         return Response(result)
 
 
-class AreasView(APIView):
+class AreasView(AuditLogMixin, APIView):
     """Existing areas, to suggest them in the sign-up form."""
 
     authentication_classes: list = []
@@ -188,7 +189,7 @@ class AreasView(APIView):
         return Response([area for area in areas if not is_removed_area(area)])
 
 
-class StaffCandidatesView(APIView):
+class StaffCandidatesView(AuditLogMixin, APIView):
     """Active staff members (role personal) that a boss (or superadmin) can include in an evaluation."""
 
     permission_classes = [IsBossOrSuperAdmin]
@@ -203,7 +204,7 @@ class StaffCandidatesView(APIView):
         return Response([person for person in staff if not is_removed_area(person["area"])])
 
 
-class EvaluatorsView(APIView):
+class EvaluatorsView(AuditLogMixin, APIView):
     """Active collaborators (the evaluators) per area, only to show the boss who will evaluate in the program form."""
 
     permission_classes = [IsBossOrSuperAdmin]
@@ -231,7 +232,7 @@ class CollaboratorsView(generics.ListAPIView):
         return qs.filter(area=user.area) if user.area else qs.none()
 
 
-class PasswordChangeView(APIView):
+class PasswordChangeView(AuditLogMixin, APIView):
     """Cambio de clave del usuario autenticado. Permitido aun con password_change_required (ver CookieJWTAuthentication)."""
     def post(self, request):
         serializer = PasswordChangeSerializer(
@@ -244,7 +245,7 @@ class PasswordChangeView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class PasswordResetRequestView(APIView):
+class PasswordResetRequestView(AuditLogMixin, APIView):
     """Sends the recovery link by email (Mailpit in dev).
 
     Always answers 200 so it does not reveal whether the email exists.
@@ -286,7 +287,7 @@ class PasswordResetRequestView(APIView):
         )
 
 
-class PasswordResetConfirmView(APIView):
+class PasswordResetConfirmView(AuditLogMixin, APIView):
     """Confirma la recuperacion: valida uid+token y aplica las reglas de clave antes de guardarla."""
     authentication_classes: list = []
     permission_classes = [AllowAny]
