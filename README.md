@@ -75,7 +75,7 @@ No versionar archivos `.env`, claves, credenciales, copias de bases de datos ni 
 - `backend/config/settings/base.py`: configuración común, PostgreSQL, DRF, JWT, seguridad y zona horaria `America/Bogota`.
 - `backend/config/settings/dev.py` y `prod.py`: ajustes por ambiente.
 - `backend/config/urls.py`: prefijo `/api/v1/` y administración Django.
-- `backend/users/models.py`: usuario personalizado. El nombre de usuario corresponde al número de documento; los roles principales son `boss` y `collaborator`.
+- `backend/users/`: usuarios, autenticación, roles, recuperación de contraseñas y carga de personal; ver [Módulo users](#modulo-users).
 - `backend/questions/models.py`: `Evaluation` es un formulario; cada formulario contiene `Category` y `Criterion`. `Question` guarda las calificaciones asociadas a colaborador, persona evaluada y formulario.
 - `backend/*/migrations/`: historial versionado del esquema. Cambios a modelos deben ir acompañados de migraciones.
 - `backend/common/`: autenticación, permisos y paginación compartidos.
@@ -93,6 +93,57 @@ La API está montada bajo `/api/v1/`. Entre las rutas principales están:
 | `/questions/results/`, `/questions/results-summary/`, `/questions/dashboard/`, `/questions/stats/` | Consulta de resultados e indicadores. |
 
 El detalle de métodos, permisos y formatos de respuesta está en las vistas, serializadores y rutas de `backend/users/` y `backend/questions/`. La especificación OpenAPI se configura con `drf-spectacular`.
+
+## Módulo users
+
+El módulo Django `backend/users/` gestiona las cuentas, el inicio y cierre de sesión, el perfil autenticado, los permisos basados en roles, el cambio y recuperación de contraseña, y las importaciones de personal. Sus rutas se registran en `users/urls.py` bajo el prefijo `/api/v1/`.
+
+### Modelo y roles
+
+El modelo `User` extiende el usuario de Django. `username` identifica la cuenta y normalmente contiene el número de documento; `email` es opcional, único y limitado al dominio institucional `demo.com`. Los campos adicionales incluyen nombres, apellidos, área, cargo (`position`) y `password_change_required`.
+
+| Rol | Responsabilidad |
+| --- | --- |
+| `superadmin` | Administración global y carga de personal. |
+| `boss` | Consulta y programación de evaluaciones para su área. |
+| `collaborator` | Cuenta de acceso que diligencia evaluaciones; la crea un superadmin o la importación autorizada. |
+| `personal` | Persona evaluada, sin acceso de inicio de sesión. |
+
+El registro público está deshabilitado: solo un superadmin puede crear cuentas desde la API. El rol no se puede asignar desde la solicitud ni editarse desde el serializador de usuario. Las comprobaciones de permisos de API también se aplican en el backend; ocultar opciones en la interfaz no sustituye esos controles.
+
+### Rutas de la API
+
+Todas las rutas siguientes se anteponen con `/api/v1/`.
+
+| Ruta | Acceso y propósito |
+| --- | --- |
+| `POST /auth/login/` | Público. Autentica con `username` y contraseña; establece cookies de sesión. |
+| `POST /auth/refresh/`, `POST /auth/logout/` | Renovación y cierre de sesión. |
+| `GET /auth/me/` | Devuelve el perfil de la sesión actual. |
+| `POST /auth/password-change/` | Usuario autenticado; exige contraseña actual al cambiar la propia. |
+| `POST /auth/password-reset/` | Público. Solicita un enlace de recuperación por correo; la respuesta no revela si la cuenta existe. |
+| `POST /auth/password-reset/confirm/` | Público. Confirma la nueva contraseña con el identificador y token del correo. |
+| `POST /users/register/` | Solo superadmin. Creación administrativa de un colaborador; valida username, nombres, área y contraseña. |
+| `GET /users/areas/` | Público. Lista áreas activas para sugerir durante el registro. |
+| `GET /users/collaborators/` | Usuario autenticado. Lista colaboradores y personal activo de su misma área. |
+| `GET /users/staff-candidates/`, `GET /users/evaluators/` | Jefe de área o superadmin; lista personal evaluable y evaluadores activos. |
+| `POST /users/import/` | Solo superadmin. Importa personal desde un archivo Excel `.xlsx`. |
+
+Las sesiones usan cookies `httpOnly`; las cookies de autenticación y CSRF se configuran en `common` y en los ajustes de Django. Las contraseñas se validan con los validadores de Django. El módulo incluye pruebas de autenticación, protección CSRF, registro, recuperación, roles y carga en `backend/users/tests.py`.
+
+### Importación y creación de cuentas
+
+`users/staff_import.py` lee Excel `.xlsx` y reconoce encabezados en español o equivalentes, ignorando diferencias de mayúsculas, tildes y separadores. Documento, nombres, área y cargo son obligatorios; apellidos son opcionales. Los documentos ya registrados se omiten, no se actualizan, y los errores se reportan por fila.
+
+Las cuentas nuevas de la importación se crean como `collaborator` con una contraseña temporal aleatoria y `password_change_required=True`. La respuesta incluye las credenciales iniciales una sola vez: deben entregarse al usuario por un canal seguro y no guardarse en logs, tickets ni repositorios. El cambio de contraseña es necesario antes de usar las demás funciones autenticadas. Para personas evaluadas sin acceso de inicio de sesión, usar el rol `personal` (por ejemplo, con el comando `seed_personal`); no confundirlo con las cuentas colaboradoras.
+
+Para crear un colaborador manualmente, un superadmin puede usar la API protegida o `users/management/commands/create_collaborator.py`, que solicita la contraseña de forma interactiva:
+
+```powershell
+docker compose exec backend python manage.py create_collaborator <documento> <nombres>
+```
+
+Los superusuarios se crean con el comando estándar de Django `createsuperuser`. No usar contraseñas de ejemplo ni credenciales temporales en producción.
 
 ## Cargas de archivos
 
@@ -179,6 +230,8 @@ Antes de actualizar un ambiente con datos, obtener y verificar una copia de segu
 
 `backend/docker-compose.prod.yml` define PostgreSQL y el backend Django/Gunicorn. Antes de levantarlo, definir las variables obligatorias indicadas en ese archivo y en `.env.example`, incluyendo `DJANGO_SECRET_KEY` de al menos 50 caracteres, contraseñas seguras, hosts permitidos, dominio del sitio y configuración SMTP. La configuración de producción fuerza `DEBUG=False`, HTTPS y cookies seguras.
 
+El puerto del backend se publica solo en `127.0.0.1` del host para que un proxy TLS local pueda acceder a Gunicorn sin exponerlo directamente a Internet. Si el proxy corre en otro contenedor o servidor, usar una red privada y no publicar el puerto del backend en una interfaz pública; el proxy debe sobrescribir `X-Forwarded-Proto`.
+
 Comando de despliegue desde `backend/`:
 
 ```powershell
@@ -197,12 +250,11 @@ El Compose de producción no incluye el frontend: servir el `dist/` generado por
 
 ## Pruebas y calidad
 
-Backend: las dependencias de desarrollo incluyen `pytest` y `pytest-django`; revisar `backend/users/tests.py` y `backend/questions/tests.py`. Ejecutar pruebas dentro del contenedor de desarrollo cuando se requiera.
+Backend: las dependencias de desarrollo incluyen `pytest` y `pytest-django`; revisar `backend/users/tests.py` y `backend/questions/tests/`. Ejecutar pruebas dentro del contenedor de desarrollo cuando se requiera.
 
 Frontend: `npm run lint` ejecuta ESLint y `npm run build` compila la aplicación.
 
 ## Documentos relacionados
 
 - Requisitos funcionales e historias de usuario: documento Word del proyecto.
-- Backend: `backend/README.md` (si se incorpora documentación específica del API).
-- Frontend: `frontend/README.md`.
+- La documentación técnica del proyecto se centraliza en este archivo raíz.
