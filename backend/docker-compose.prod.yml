@@ -2,7 +2,7 @@ name: heroes_del_corazon_pabon
 
 # Production (run from this folder): docker compose -f docker-compose.prod.yml up -d --build
 # Required variables (in a .env next to this file or exported): see .env.example.
-# The API listens on :8000; put your reverse proxy / the built frontend in front of it.
+# Bind the host port to loopback; expose the API only through a trusted TLS reverse proxy.
 services:
   db:
     image: postgres:16-alpine
@@ -48,7 +48,7 @@ services:
       COLLECT_STATIC: "true"
     command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "127.0.0.1:${API_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
