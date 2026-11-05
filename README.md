@@ -78,6 +78,7 @@ No versionar archivos `.env`, claves, credenciales, copias de bases de datos ni 
 - `backend/users/`: usuarios, autenticación, roles, recuperación de contraseñas y carga de personal; ver [Módulo users](#modulo-users).
 - `backend/questions/models.py`: `Evaluation` es un formulario; cada formulario contiene `Category` y `Criterion`. `Question` guarda las calificaciones asociadas a colaborador, persona evaluada y formulario.
 - `backend/common/`: autenticación JWT, validación CSRF, permisos reutilizables y paginación; ver [Módulo common](#modulo-common).
+- `backend/audit/` y `backend/realtime/`: eventos de auditoría estructurados y notificaciones WebSocket; no definen modelos ni migraciones.
 - `backend/*/migrations/`: historial versionado del esquema. Cambios a modelos deben ir acompañados de migraciones.
 
 La API está montada bajo `/api/v1/`. Entre las rutas principales están:
@@ -235,6 +236,26 @@ Los roles se comparan exactamente; no hay herencia implícita entre ellos. `MANA
 ### Paginación
 
 `DefaultPagination` (`common/pagination.py`) usa paginación por número de página. En `REST_FRAMEWORK`, el tamaño predeterminado es 20; `?page_size=` permite solicitar otro tamaño hasta un máximo de 200 y `?page=` selecciona la página. Este paginador se aplica a endpoints que usan el paginador predeterminado de DRF (por ejemplo, vistas genéricas paginadas); una vista API personalizada que devuelve una lista directamente debe invocar la paginación explícitamente para producir una respuesta paginada.
+
+## Módulos audit y realtime
+
+Estos módulos comparten la capa de aplicación, pero sus eventos no se escriben en PostgreSQL: no agregan tablas, migraciones ni escrituras de auditoría. La auditoría se emite como JSON a stdout para que Docker o un recolector externo la almacene según la política operativa. No hay retención automática configurada; los logs disponibles dependen del driver y la rotación del entorno.
+
+### Auditoría (`backend/audit/`)
+
+`AuditLogMixin` se integra en las vistas de usuarios y evaluaciones. Registra solicitudes mutantes (`POST`, `PUT`, `PATCH`, `DELETE`) con nombre de acción/endpoint, resultado HTTP, fecha UTC, IP remota e identificador/rol del usuario autenticado cuando existe. Incluye intentos rechazados para dejar constancia de errores de autorización o validación. El formato JSON se define en `audit/logging.py`.
+
+No se registran cuerpos de solicitud/respuesta, contraseñas, cookies, encabezados de autorización, tokens ni respuestas de API; por ello el log no es un respaldo de los datos de negocio. La auditoría de la API tampoco debe confundirse con un historial inmutable de cambios de PostgreSQL ni cubre automáticamente modificaciones hechas fuera de esas vistas (por ejemplo, edición directa en SQL).
+
+### Tiempo real (`backend/realtime/`)
+
+`config/asgi.py` enruta HTTP a Django y `/ws/events/` a Django Channels. El WebSocket autentica el JWT de la cookie httpOnly `access_token`, valida el origen contra `ALLOWED_HOSTS` y limita conexiones a cuentas activas de tipo `boss`, `superadmin` o `collaborator` sin cambio de contraseña pendiente. Las cuentas `personal` no abren sesión de WebSocket.
+
+Redis (Channels) transporta eventos entre procesos; no almacena respuestas de evaluación ni el registro de auditoría. Los mensajes solo contienen el tipo de evento y su fecha, sin nombres, puntuaciones, identificadores de personas ni otros datos de evaluación. Los canales se agrupan por rol: los responsables reciben nuevas entregas; las evaluaciones nuevas o modificadas se anuncian a ambos grupos; cambios de personal se anuncian a responsables. El cliente debe volver a consultar la API autenticada para obtener información autorizada.
+
+El frontend mantiene una conexión mientras hay sesión, reintenta con espera creciente si se interrumpe y renueva la sesión si el JWT expira. Vite reenvía `/ws/` al backend en desarrollo. En producción, el proxy HTTPS debe permitir el upgrade de WebSocket y enrutar `/ws/` al servicio ASGI Daphne, igual que `/api/`.
+
+Ambos archivos Compose incluyen Redis sin publicar su puerto al host. Producción usa Daphne para servir HTTP y WebSocket desde ASGI. `CHANNELS_REDIS_URL` configura la capa de canales (por defecto, la base Redis 3); no ejecutar migraciones para habilitar estas funciones, ya que no usan modelos de base de datos.
 
 ## Cargas de archivos
 
