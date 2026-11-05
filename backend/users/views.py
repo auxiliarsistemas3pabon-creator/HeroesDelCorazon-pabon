@@ -1,3 +1,5 @@
+"""Vistas de autenticación, cuentas y directorios de usuarios para /api/v1/."""
+
 import logging
 
 from django.conf import settings
@@ -70,10 +72,11 @@ def _clear_auth_cookies(response):
 
 
 class LoginView(AuditLogMixin, APIView):
-    """Login por username/password. Responde con el usuario y deja los tokens en cookies.
+    """POST /auth/login/: autentica con username y contraseña y emite cookies JWT httpOnly.
 
-        Sin autenticacion previa (authentication_classes vacio). django-axes bloquea por par usuario+IP.
-        """
+    Es pública, limitada por tasa y protegida contra intentos repetidos por django-axes.
+    No incluye los tokens en el cuerpo de respuesta; registra el resultado sin registrar credenciales.
+    """
     authentication_classes: list = []
     permission_classes = [AllowAny]
     throttle_classes = [ScopedRateThrottle]
@@ -101,7 +104,7 @@ class LoginView(AuditLogMixin, APIView):
 
 
 class RefreshView(AuditLogMixin, APIView):
-    """Rota el refresh token de la cookie: lista en negra el anterior y emite un par nuevo (anti-replay)."""
+    """POST /auth/refresh/: invalida el refresh token anterior y emite cookies JWT nuevas."""
     authentication_classes: list = []
     permission_classes = [AllowAny]
 
@@ -122,7 +125,7 @@ class RefreshView(AuditLogMixin, APIView):
 
 
 class LogoutView(AuditLogMixin, APIView):
-    """Invalida el refresh token y limpia cookies. Es idempotente: no falla aunque la sesion ya no exista."""
+    """POST /auth/logout/: invalida el refresh token si existe y elimina las cookies de sesión."""
     authentication_classes: list = []
     permission_classes = [AllowAny]
 
@@ -139,14 +142,14 @@ class LogoutView(AuditLogMixin, APIView):
 
 
 class MeView(AuditLogMixin, APIView):
-    """Usuario autenticado actual. Tambien emite la cookie CSRF que el frontend necesita para peticiones mutantes."""
+    """GET /auth/me/: devuelve el usuario autenticado y establece la cookie CSRF para futuras mutaciones."""
     def get(self, request):
         get_token(request)
         return Response(AuthenticatedUserSerializer(request.user).data)
 
 
 class RegisterView(AuditLogMixin, generics.CreateAPIView):
-    """Create a collaborator only through an authenticated superadmin."""
+    """POST /users/register/: permite que un superadmin cree una cuenta colaboradora."""
 
     serializer_class = RegisterSerializer
     permission_classes = [IsSuperAdmin]
@@ -155,7 +158,10 @@ class RegisterView(AuditLogMixin, generics.CreateAPIView):
 
 
 class StaffImportView(AuditLogMixin, APIView):
-    """Superadmin: uploads an Excel (.xlsx) with the staff. Existing document numbers are skipped, never duplicated."""
+    """POST /users/import/: superadmin importa personal desde Excel dentro de una transacción.
+
+    Los documentos existentes se omiten; errores de formato se devuelven como HTTP 400.
+    """
 
     permission_classes = [IsSuperAdmin]
     parser_classes = [MultiPartParser]
@@ -173,7 +179,7 @@ class StaffImportView(AuditLogMixin, APIView):
 
 
 class AreasView(AuditLogMixin, APIView):
-    """Existing areas, to suggest them in the sign-up form."""
+    """GET /users/areas/: lista áreas activas para sugerencias del formulario de registro."""
 
     authentication_classes: list = []
     permission_classes = [AllowAny]
@@ -190,7 +196,7 @@ class AreasView(AuditLogMixin, APIView):
 
 
 class StaffCandidatesView(AuditLogMixin, APIView):
-    """Active staff members (role personal) that a boss (or superadmin) can include in an evaluation."""
+    """GET /users/staff-candidates/: jefe o superadmin consulta personas activas que pueden evaluarse."""
 
     permission_classes = [IsBossOrSuperAdmin]
 
@@ -205,7 +211,7 @@ class StaffCandidatesView(AuditLogMixin, APIView):
 
 
 class EvaluatorsView(AuditLogMixin, APIView):
-    """Active collaborators (the evaluators) per area, only to show the boss who will evaluate in the program form."""
+    """GET /users/evaluators/: jefe o superadmin consulta colaboradores activos para programar evaluadores."""
 
     permission_classes = [IsBossOrSuperAdmin]
 
@@ -220,7 +226,7 @@ class EvaluatorsView(AuditLogMixin, APIView):
 
 
 class CollaboratorsView(generics.ListAPIView):
-    """Colleagues (collaborators and staff) the current collaborator can evaluate: same area only."""
+    """GET /users/collaborators/: lista compañeros activos de la misma área, excluyendo al usuario actual."""
 
     serializer_class = UserSerializer
     pagination_class = None
@@ -233,7 +239,7 @@ class CollaboratorsView(generics.ListAPIView):
 
 
 class PasswordChangeView(AuditLogMixin, APIView):
-    """Cambio de clave del usuario autenticado. Permitido aun con password_change_required (ver CookieJWTAuthentication)."""
+    """POST /auth/password-change/: cambia la contraseña propia y limpia el indicador de clave temporal."""
     def post(self, request):
         serializer = PasswordChangeSerializer(
             data=request.data, context={"request": request, "target_user": request.user}
@@ -246,9 +252,9 @@ class PasswordChangeView(AuditLogMixin, APIView):
 
 
 class PasswordResetRequestView(AuditLogMixin, APIView):
-    """Sends the recovery link by email (Mailpit in dev).
+    """POST /auth/password-reset/: solicita por correo un enlace de recuperación.
 
-    Always answers 200 so it does not reveal whether the email exists.
+    Siempre devuelve HTTP 200 para no revelar si la dirección existe; aplica limitación de tasa.
     """
 
     authentication_classes: list = []
@@ -288,7 +294,7 @@ class PasswordResetRequestView(AuditLogMixin, APIView):
 
 
 class PasswordResetConfirmView(AuditLogMixin, APIView):
-    """Confirma la recuperacion: valida uid+token y aplica las reglas de clave antes de guardarla."""
+    """POST /auth/password-reset/confirm/: valida uid y token, aplica reglas y guarda la nueva contraseña."""
     authentication_classes: list = []
     permission_classes = [AllowAny]
     throttle_classes = [ScopedRateThrottle]
