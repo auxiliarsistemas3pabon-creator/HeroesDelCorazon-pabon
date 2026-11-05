@@ -11,10 +11,13 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     server: {
-      // El front llama a /api/v1/... en su mismo origen (cookies httpOnly + CSRF sin CORS)
-      // y Vite reenvía esas peticiones al backend.
+      // API y WebSocket usan el mismo origen del navegador; Vite reenvía ambos al backend.
       proxy: {
         '/api': env.VITE_API_URL || 'http://localhost:8001',
+        '/ws': {
+          target: env.VITE_API_URL || 'http://localhost:8001',
+          ws: true,
+        },
       },
     },
   }
