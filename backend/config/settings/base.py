@@ -58,7 +58,7 @@ LOCAL_APPS: list[str] = [
 
 AUTH_USER_MODEL = "users.User"
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS = ["daphne", "channels"] + DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 # El orden importa: CorsMiddleware va primero y AxesMiddleware al final.
 MIDDLEWARE = [
@@ -159,6 +159,16 @@ REST_FRAMEWORK = {
         "anon": os.getenv("THROTTLE_RATE_ANON", default="200/min"),
         "user": os.getenv("THROTTLE_RATE_USER", default="1000/min"),
         "login": os.getenv("THROTTLE_RATE_LOGIN", default="500/min"),
+    },
+}
+
+ASGI_APPLICATION = "config.asgi.application"
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [os.getenv("CHANNELS_REDIS_URL", "redis://localhost:6379/3")],
+        },
     },
 }
 
@@ -275,11 +285,18 @@ LOGGING = {
             "format": "[{asctime}] {levelname} {name}: {message}",
             "style": "{",
         },
+        "audit_json": {
+            "()": "audit.logging.AuditJSONFormatter",
+        },
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "simple",
+        },
+        "audit_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "audit_json",
         },
     },
     "root": {
@@ -295,6 +312,11 @@ LOGGING = {
         "django.security": {
             "handlers": ["console"],
             "level": "WARNING",
+            "propagate": False,
+        },
+        "audit": {
+            "handlers": ["audit_console"],
+            "level": "INFO",
             "propagate": False,
         },
     },
